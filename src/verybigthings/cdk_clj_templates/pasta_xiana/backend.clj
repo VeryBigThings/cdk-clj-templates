@@ -22,7 +22,7 @@
         dbname (.unsafeUnwrap (.secretValueFromJson (cdk/get rds [:secret]) "dbname"))]
     (str "postgres://postgres:" secret "@" url ":5432/" dbname)))
 
-(defn- TaskImageOptions [repo rds]
+(defn- TaskImageOptions [repo rds {:keys [jwt-secret]}]
   (ApplicationLoadBalancedTaskImageOptions
    ;{:image (ContainerImage/fromEcrRepository repo commitHash)
    {:image (ContainerImage/fromEcrRepository repo)
@@ -30,7 +30,7 @@
     :environment (doto
                   (java.util.HashMap.)
                    (.put "PG_URL" (get-db-url rds))
-                   (.put "JWT_SECRET" "secret7")
+                   (.put "JWT_SECRET" jwt-secret)
                    (.put "WS_PORT" "3000"))}))
 
 (defn- InitializeStack [app {:keys [name region account]}]
@@ -52,13 +52,13 @@
 (defn- InitializeCluster [stack vpc {:keys [name]}]
   (Cluster stack (str name "-cluster") {:vpc vpc}))
 
-(defn- InitializeAlbFs [stack cluster repo rds {:keys [name]}]
+(defn- InitializeAlbFs [stack cluster repo rds {:keys [name] :as config}]
   (ApplicationLoadBalancedFargateService
    stack
    (str name "-fargate")
    {:cluster cluster
     :desiredCount 1
-    :taskImageOptions (TaskImageOptions repo rds)
+    :taskImageOptions (TaskImageOptions repo rds config)
     :memoryLimitMiB 2048
     :assignPublicIp true
     :publicLoadBalancer true}))
