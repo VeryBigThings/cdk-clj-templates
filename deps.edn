@@ -1,0 +1,15 @@
+{:paths   ["resources" "src"]
+ :deps    {org.clojure/clojure                 {:mvn/version "1.11.1"}
+           verybigthings/cdk {:git/url "https://github.com/verybigthings/cdk-clj.git"
+                              :sha     "7d07b4b40f8a0b28de6b867481e80d79ccdc056c"}
+           software.amazon.awscdk/ec2 {:mvn/version "1.176.0"}
+           software.amazon.awscdk/ecs {:mvn/version "1.176.0"}
+           software.amazon.awscdk/ecr {:mvn/version "1.176.0"}
+           software.amazon.awscdk/route53 {:mvn/version "1.176.0"}
+           software.amazon.awscdk/route53-targets {:mvn/version "1.176.0"}
+           software.amazon.awscdk/s3 {:mvn/version "1.176.0"}
+           software.amazon.awscdk/s3-deployment {:mvn/version "1.176.0"}
+           software.amazon.awscdk/cloudfront {:mvn/version "1.176.0"}
+           software.amazon.awscdk/cloudfront-origins {:mvn/version "1.176.0"}}
+ :aliases {:dev  {:extra-deps  {clj-kondo/clj-kondo {:mvn/version "2022.09.08"}}}
+           :lint {:main-opts ["-m" "clj-kondo.main" "--lint" "."]}}}
