@@ -5,7 +5,7 @@
             [[ARecord RecordTarget HostedZone HostedZoneAttributes] :from "route53"]
             [[LoadBalancerTarget] :from "route53.targets"]
             [[ApplicationTargetGroup HealthCheck] :from "elasticloadbalancingv2"]
-            [[Vpc VpcLookupOptions SubnetSelection SubnetType] :from "ec2"]
+            [[Vpc VpcLookupOptions SubnetSelection SubnetType SecurityGroup Peer Port] :from "ec2"]
             [[Cluster ContainerImage] :from "ecs"]
             [[Repository] :from "ecr"]
             [[ApplicationLoadBalancedTaskImageOptions ApplicationLoadBalancedFargateService] :from "ecs.patterns"]
@@ -43,12 +43,22 @@
 (defn- InitializeVpc [stack {:keys [name]}]
   (Vpc/fromLookup stack (str name "-vpc") (VpcLookupOptions {:vpcId vpc-id})))
 
-(defn- InitializeDB [stack vpc {:keys [name db-name]}]
+(defn- InitializeSecurityGroupDB [stack vpc {:keys [name]}]
+  (let [security-group (SecurityGroup stack (str name "-securityGroupDB") {:vpc vpc})]
+    (SecurityGroup/addIngressRule
+     security-group
+     (Peer/ipv4 "0.0.0.0/0")
+     (Port/tcp 5432))
+    security-group))
+
+(defn- InitializeDB [stack vpc {:keys [name db-name] :as config}]
   (DatabaseInstance stack (str name "-db") {:vpc vpc
                                             :vpcSubnets (SubnetSelection {:subnetType SubnetType/PUBLIC})
                                             :engine (DatabaseInstanceEngine/POSTGRES)
                                             :databaseName db-name
-                                            :credentials (Credentials/fromGeneratedSecret "postgres")}))
+                                            :credentials (Credentials/fromGeneratedSecret "postgres")
+                                            :securityGroups [(InitializeSecurityGroupDB stack vpc config)]}))
+
 (defn- InitializeCluster [stack vpc {:keys [name]}]
   (Cluster stack (str name "-cluster") {:vpc vpc}))
 
