@@ -5,7 +5,7 @@
             [[ARecord RecordTarget HostedZone HostedZoneAttributes] :from "route53"]
             [[LoadBalancerTarget] :from "route53.targets"]
             [[ApplicationTargetGroup HealthCheck] :from "elasticloadbalancingv2"]
-            [[Vpc VpcLookupOptions SubnetSelection SubnetType SecurityGroup Peer Port] :from "ec2"]
+            [[Vpc VpcLookupOptions SubnetSelection SubnetType SecurityGroup Peer Port InstanceType InstanceClass InstanceSize] :from "ec2"]
             [[Cluster ContainerImage] :from "ecs"]
             [[Repository] :from "ecr"]
             [[ApplicationLoadBalancedTaskImageOptions ApplicationLoadBalancedFargateService] :from "ecs.patterns"]
@@ -24,8 +24,7 @@
 
 (defn- TaskImageOptions [repo rds {:keys [jwt-secret]}]
   (ApplicationLoadBalancedTaskImageOptions
-   ;{:image (ContainerImage/fromEcrRepository repo commitHash)
-   {:image (ContainerImage/fromEcrRepository repo)
+   {:image (ContainerImage/fromEcrRepository repo commitHash)
     :containerPort 3000
     :environment (doto
                   (java.util.HashMap.)
@@ -57,7 +56,8 @@
                                             :engine (DatabaseInstanceEngine/POSTGRES)
                                             :databaseName db-name
                                             :credentials (Credentials/fromGeneratedSecret "postgres")
-                                            :securityGroups [(InitializeSecurityGroupDB stack vpc config)]}))
+                                            :securityGroups [(InitializeSecurityGroupDB stack vpc config)]
+                                            :instanceType (InstanceType/of InstanceClass/T3 InstanceSize/MICRO)}))
 
 (defn- InitializeCluster [stack vpc {:keys [name]}]
   (Cluster stack (str name "-cluster") {:vpc vpc}))
